@@ -7,7 +7,7 @@ pipeline {
       steps {
         step([$class: 'WsCleanup'])
         checkout(scm)
-        sh("""virtualenv -p python3.7 venv
+        sh("""virtualenv -p python3.6 venv
         . venv/bin/activate
         pip install -r requirements-tests.txt
         python -m nose -v --with-cover --cover-erase --cover-min-percentage=90 --cover-package=grant_ssh_access
