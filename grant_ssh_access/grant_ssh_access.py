@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-import json
 import os
+import traceback
+
 import requests
+
 
 class State:
     def __init__(self):
@@ -25,12 +27,14 @@ def main(user_name, public_key, ttl):
         state = State()
 
         vault_authenticate(state)
-        signed_cert_response = vault_sign_certificate(state, user_name, public_key, ttl)
+        signed_cert_response = vault_sign_certificate(
+            state, user_name, public_key, ttl
+        )
         wrapped_token = vault_wrap(state, json_blob=signed_cert_response)
 
         return {"token": wrapped_token}
     except Exception as e:
-        return {"error": str(e), "trace": e.with_traceback()}
+        return {"error": str(e), "trace": traceback.format_exc()}
 
 
 def vault_authenticate(state):
@@ -43,16 +47,22 @@ def vault_authenticate(state):
         state.vault_auth_token = response["auth"]["client_token"]
     except KeyError:
         raise Exception(
-            "vault authentication failed!  is the AppRole for this application configured correctly?"
+            "vault authentication failed!  "
+            "is the AppRole for this application configured correctly?"
         )
 
 
 def vault_sign_certificate(state, user_name, public_key, ttl):
     url = (
         state.VAULT_URL
-        + "/v1/ssh-platsec-poc/sign/signer-poc"  # TODO Change this to the real ssh backend!
+        # TODO Change this to the real ssh backend!
+        + "/v1/ssh-platsec-poc/sign/signer-poc"
     )
-    data = {"public_key": public_key, "valid_principals": user_name, "ttl": ttl}
+    data = {
+        "public_key": public_key,
+        "valid_principals": user_name,
+        "ttl": ttl,
+    }
     headers = {"X-Vault-Token": state.vault_auth_token}
 
     response = requests.post(url, json=data, headers=headers).json()
@@ -79,7 +89,3 @@ def vault_wrap(state, json_blob):
     except KeyError:
         errors = response.get("errors", [])
         raise Exception("Wrapping failed.  " + "; ".join(errors))
-
-
-def dump(o):
-print(json.dumps(o, indent=2, sort_keys=True))
