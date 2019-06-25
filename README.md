@@ -1,7 +1,10 @@
 
 # grant-ssh-access
 
-This is a placeholder README.md for a new repository
+This is a lambda that takes a username and public key, and:
+- Signs the public key using Vault.
+- Wraps the signed public key using Vault's Wrapping service.
+- Returns the wrapping token back to the caller.
 
 ### License
 
