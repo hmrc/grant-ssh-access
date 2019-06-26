@@ -27,7 +27,11 @@ pipeline {
     }
     stage('Upload to s3') {
       steps {
-        sh("""aws s3 cp grant_ssh_access.zip s3://mdtp-lambda-functions-management/grant_ssh_access.zip --acl=bucket-owner-full-control""")
+        sh("""for env in sandbox integration; do
+                #development qa staging externaltest production; do
+                aws s3 cp grant_ssh_access.zip s3://mdtp-lambda-functions-\${env}/grant_ssh_access.zip --acl=bucket-owner-full-control
+                done
+        """)
       }
     }
   }
