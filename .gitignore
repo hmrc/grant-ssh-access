@@ -22,7 +22,9 @@ npm-debug.log
 yarn-debug.log
 yarn-error.log
 
-    
+lambda-packages/*
+grant_ssh_access.zip
+
 .env
 
 # Created by https://www.gitignore.io/api/python,intellij+all
