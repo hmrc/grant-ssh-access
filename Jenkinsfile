@@ -30,6 +30,7 @@ pipeline {
         sh("""for env in sandbox integration; do
                 #development qa staging externaltest production; do
                 aws s3 cp grant_ssh_access.zip s3://mdtp-lambda-functions-\${env}/grant_ssh_access.zip --acl=bucket-owner-full-control
+                aws s3 cp grant_ssh_access.zip.base64sha256 s3://mdtp-lambda-functions-\${env}/grant_ssh_access.zip.base64sha256 --content-type text/plain --acl=bucket-owner-full-control
                 done
         """)
       }
