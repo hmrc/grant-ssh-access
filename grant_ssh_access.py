@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
 import traceback
-
+import aws_get_vault_object
 import requests
-
+import hvac
+import boto3
+import json
 
 class State:
     def __init__(self):
@@ -18,9 +20,50 @@ class State:
         self.vault_auth_token = None
 
 
-def lambda_handler(event, context):
-    return main(event["user_name"], event["public_key"], event["ttl"])
+# def lambda_handler(event, context):
+#     return main(event["user_name"], event["public_key"], event["ttl"])
 
+def lambda_handler(event, context):
+    credentials = _get_aws_credentials()
+    print(credentials.token)
+
+def _get_aws_credentials():
+    """
+        Return keys and token for the instances IAM role.
+    """
+    session = boto3.Session()
+    credentials = session.get_credentials()
+    credentials = credentials.get_frozen_credentials()
+
+    if not hasattr(credentials, 'access_key'):
+        raise BadCredentials
+
+    if len(credentials.access_key) < 16:
+        raise BadCredentials
+
+    return credentials
+
+
+def _connect_to_vault(url, access_key, secret_key, token, region, ca_cert=None):
+    """
+        Return Vault client using supplied IAM credentials.
+    """
+    # Add CA_CERT for lambda requests to vault
+    if ca_cert:
+        vault_client = hvac.Client(url=url, verify=ca_cert)
+    else:
+        vault_client = hvac.Client(url=url)
+
+    vault_client.auth_aws_iam(access_key,
+                              secret_key,
+                              token,
+                              region=region)
+
+    return vault_client
+
+def lambda_handler(event, context):
+    credentials = _get_aws_credentials()
+    print(credentials.token)
 
 def main(user_name, public_key, ttl):
     try:

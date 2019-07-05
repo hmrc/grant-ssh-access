@@ -3,8 +3,7 @@ import re
 
 import pytest
 import responses
-
-from grant_ssh_access import grant_ssh_access
+import grant_ssh_access
 
 
 @pytest.fixture(autouse=True)
