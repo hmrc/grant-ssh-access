@@ -1,4 +1,4 @@
 requests==2.22.0
 hvac
 boto
-git+ssh://git@github.com/hmrc/aws-get-vault-object.git
+git+ssh://git@github.com/hmrc/aws-get-vault-object
