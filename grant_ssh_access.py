@@ -24,8 +24,9 @@ class State:
 #     return main(event["user_name"], event["public_key"], event["ttl"])
 
 def lambda_handler(event, context):
-    credentials = _get_aws_credentials()
-    print(credentials.token)
+    # credentials = _get_aws_credentials()
+    # print(credentials.token)
+    print("wibble")
 
 def _get_aws_credentials():
     """
