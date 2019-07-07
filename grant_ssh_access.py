@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import traceback
-import aws_get_vault_object
 import requests
 import hvac
 import boto3
@@ -24,9 +23,18 @@ class State:
 #     return main(event["user_name"], event["public_key"], event["ttl"])
 
 def lambda_handler(event, context):
-    # credentials = _get_aws_credentials()
-    # print(credentials.token)
-    print("wibble")
+    region = os.getenv('REGION')
+    vault_url = os.getenv('VAULT_URL')
+    public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwVHOV/5rIT8YlT4SI/6hXOj0z+ZKgIBUxee8LvY/5QFafozx5EXWp1t1m9aHOOtzCOoVI63vG3xEwm1ieA+cG6VDtIfOCh+1G0y8/81NvnuB3SCW0O34znTIuUADuYInF8GxqBXekU6yKjEIPVY0ekgM/6sDsMlL40aXmsmYEzhHT25KBa7CMo9Hbju/CViggWShIgj5gSJjLzWU8CPuWE6913S26vYQDUzYD/Md60klp4kvQDSp3dFUFcUCp29ptsDrRSUAS+sD8K7TVlzp5cSjeeEGqYjdlmn6/RsPj1aKxruZJKS59ji+sNrkqgPCiMBv7yDkOUUGk1ftwe0uj"
+    name = "bernard.camus"
+    ttl = "21600"
+    region = "eu-west-2"
+    credentials = _get_aws_credentials()
+    client = _connect_to_vault(vault_url, credentials.access_key, credentials.secret_key, credentials.token, region)
+    current_token = client.lookup_token()
+    current_json = json.loads(json.dumps(current_token))
+    vault_token = (current_json['data']['id'])
+    vault_sign_certificate(vault_url, name, public_key, ttl, vault_token)
 
 def _get_aws_credentials():
     """
@@ -51,9 +59,9 @@ def _connect_to_vault(url, access_key, secret_key, token, region, ca_cert=None):
     """
     # Add CA_CERT for lambda requests to vault
     if ca_cert:
-        vault_client = hvac.Client(url=url, verify=ca_cert)
+        vault_client = hvac.Client(url=url, verify=False)
     else:
-        vault_client = hvac.Client(url=url)
+        vault_client = hvac.Client(url=url, verify=False)
 
     vault_client.auth_aws_iam(access_key,
                               secret_key,
@@ -62,60 +70,24 @@ def _connect_to_vault(url, access_key, secret_key, token, region, ca_cert=None):
 
     return vault_client
 
-def lambda_handler(event, context):
-    credentials = _get_aws_credentials()
-    print(credentials.token)
-
-def main(user_name, public_key, ttl):
-    try:
-        state = State()
-
-        vault_authenticate(state)
-        signed_cert_response = vault_sign_certificate(
-            state, user_name, public_key, ttl
-        )
-        wrapped_token = vault_wrap(state, json_blob=signed_cert_response)
-
-        return {"token": wrapped_token}
-    except Exception as e:
-        return {"error": str(e), "trace": traceback.format_exc()}
-
-
-def vault_authenticate(state):
-    url = state.VAULT_URL + "/v1/auth/approle/login"
-    data = {"role_id": state.VAULT_ROLE_ID, "secret_id": state.VAULT_SECRET_ID}
-
-    response = requests.post(url, json=data).json()
-
-    try:
-        state.vault_auth_token = response["auth"]["client_token"]
-    except KeyError:
-        raise Exception(
-            "vault authentication failed!  "
-            "is the AppRole for this application configured correctly?"
-        )
-
-
-def vault_sign_certificate(state, user_name, public_key, ttl):
-    url = (
-        state.VAULT_URL
-        # TODO Change this to the real ssh backend!
-        + "/v1/ssh-platsec-poc/sign/signer-poc"
-    )
+def vault_sign_certificate(vault_url, user_name, public_key, ttl, vault_token):
+    print("###### Signing Public Certificate ######")
+    url = vault_url + "/v1/ssh-platsec-poc/sign/signer-poc"
     data = {
         "public_key": public_key,
         "valid_principals": user_name,
         "ttl": ttl,
     }
-    headers = {"X-Vault-Token": state.vault_auth_token}
+    headers = {"X-Vault-Token": vault_token}
 
-    response = requests.post(url, json=data, headers=headers).json()
+    response = requests.post(url, json=data, headers=headers, verify=False)
+    print(response.content)
 
-    try:
-        return response["data"]
-    except KeyError:
-        errors = response.get("errors", [])
-        raise Exception("Certificate signing failed.  " + "; ".join(errors))
+    # try:
+    #     return response["data"]
+    # except KeyError:
+    #     errors = response.get("errors", [])
+    #     raise Exception("Certificate signing failed.  " + "; ".join(errors))
 
 
 def vault_wrap(state, json_blob):

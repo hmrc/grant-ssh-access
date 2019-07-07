@@ -1,13 +1,13 @@
 #!/bin/bash
 
 set -xeou
-yum install -y zip python36 python3-pip
+yum install -y zip python36
 pip install -U pip
-
 BASEDIR=/data
 PIPPACKAGESDIR=${BASEDIR}/lambda-packages
 
 cd ${BASEDIR}
+
 zip grant_ssh_access.zip grant_ssh_access.py
 
 mkdir -p ${PIPPACKAGESDIR}
