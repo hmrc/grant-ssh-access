@@ -25,8 +25,8 @@ class State:
 def lambda_handler(event, context):
     region = os.getenv('REGION')
     vault_url = os.getenv('VAULT_URL')
-    public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCwVHOV/5rIT8YlT4SI/6hXOj0z+ZKgIBUxee8LvY/5QFafozx5EXWp1t1m9aHOOtzCOoVI63vG3xEwm1ieA+cG6VDtIfOCh+1G0y8/81NvnuB3SCW0O34znTIuUADuYInF8GxqBXekU6yKjEIPVY0ekgM/6sDsMlL40aXmsmYEzhHT25KBa7CMo9Hbju/CViggWShIgj5gSJjLzWU8CPuWE6913S26vYQDUzYD/Md60klp4kvQDSp3dFUFcUCp29ptsDrRSUAS+sD8K7TVlzp5cSjeeEGqYjdlmn6/RsPj1aKxruZJKS59ji+sNrkqgPCiMBv7yDkOUUGk1ftwe0uj"
-    name = "bernard.camus"
+    public_key = "ssh-rsa some public key"
+    name = "user name"
     ttl = "21600"
     region = "eu-west-2"
     credentials = _get_aws_credentials()
