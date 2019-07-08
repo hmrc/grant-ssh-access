@@ -23,7 +23,7 @@ yarn-debug.log
 yarn-error.log
 
 lambda-packages/*
-grant_ssh_access.zip
+*.zip
 
 .env
 
