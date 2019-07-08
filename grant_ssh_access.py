@@ -23,6 +23,7 @@ class State:
 #     return main(event["user_name"], event["public_key"], event["ttl"])
 
 def lambda_handler(event, context):
+    ca_cert = os.getenv('CA_CERT')
     region = os.getenv('REGION')
     vault_url = os.getenv('VAULT_URL')
     public_key = "ssh-rsa some public key"
@@ -30,7 +31,7 @@ def lambda_handler(event, context):
     ttl = "21600"
     region = "eu-west-2"
     credentials = _get_aws_credentials()
-    client = _connect_to_vault(vault_url, credentials.access_key, credentials.secret_key, credentials.token, region)
+    client = _connect_to_vault(vault_url, credentials.access_key, credentials.secret_key, credentials.token, region, ca_cert)
     current_token = client.lookup_token()
     current_json = json.loads(json.dumps(current_token))
     vault_token = (current_json['data']['id'])
@@ -53,15 +54,15 @@ def _get_aws_credentials():
     return credentials
 
 
-def _connect_to_vault(url, access_key, secret_key, token, region, ca_cert=None):
+def _connect_to_vault(url, access_key, secret_key, token, region, ca_cert="./mdtp.pem"):
     """
         Return Vault client using supplied IAM credentials.
     """
     # Add CA_CERT for lambda requests to vault
     if ca_cert:
-        vault_client = hvac.Client(url=url, verify=False)
+        vault_client = hvac.Client(url=url, verify=ca_cert)
     else:
-        vault_client = hvac.Client(url=url, verify=False)
+        vault_client = hvac.Client(url=url)
 
     vault_client.auth_aws_iam(access_key,
                               secret_key,
