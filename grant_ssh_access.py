@@ -1,43 +1,43 @@
 #!/usr/bin/env python3
 import os
 import traceback
-import requests
-import hvac
+
 import boto3
-import json
+import hvac
+import requests
 
-class State:
-    def __init__(self):
-        self.ENVIRONMENT = os.environ["ENVIRONMENT"].lower()
-        self.VAULT_URL = "https://vault.tools.{}.tax.service.gov.uk".format(
-            self.ENVIRONMENT
-        )
-        self.VAULT_ROLE_ID = os.environ["VAULT_ROLE_ID"]
-        self.VAULT_SECRET_ID = os.environ["VAULT_SECRET_ID"]
-        self.DEFAULT_WRAP_TTL = str(60 * 60 * 4)
+DEFAULT_WRAP_TTL = str(60 * 60 * 4)
 
-        self.vault_auth_token = None
-
-
-# def lambda_handler(event, context):
-#     return main(event["user_name"], event["public_key"], event["ttl"])
 
 def lambda_handler(event, context):
-    ca_cert = os.getenv('CA_CERT')
-    region = os.getenv('REGION')
-    vault_url = os.getenv('VAULT_URL')
-    public_key = "ssh-rsa some public key"
-    name = "user name"
-    ttl = "21600"
-    region = "eu-west-2"
-    credentials = _get_aws_credentials()
-    client = _connect_to_vault(vault_url, credentials.access_key, credentials.secret_key, credentials.token, region, ca_cert)
-    current_token = client.lookup_token()
-    current_json = json.loads(json.dumps(current_token))
-    vault_token = (current_json['data']['id'])
-    vault_sign_certificate(vault_url, name, public_key, ttl, vault_token)
+    return main(event["user_name"], event["public_key"], event["ttl"])
 
-def _get_aws_credentials():
+
+def main(user_name, public_key, ttl):
+    try:
+        ca_cert = os.getenv("CA_CERT", "./mdtp.pem")
+        region = os.getenv("REGION", "eu-west-2")
+        vault_url = os.getenv("VAULT_URL")
+
+        credentials = aws_authenticate()
+        vault_token = vault_authenticate(vault_url, credentials, region, ca_cert)
+
+        vault_session = requests.Session()
+        vault_session.verify = ca_cert
+        vault_session.headers.update({"X-Vault-Token": vault_token})
+
+        signed_public_key = vault_sign_public_key(
+            vault_url, vault_session, user_name, public_key, ttl
+        )
+
+        wrap_token = vault_wrap(vault_url, vault_session, signed_public_key)
+
+        return {"token": wrap_token}
+    except Exception as e:
+        return {"error": str(e), "stacktrace": traceback.format_exc()}
+
+
+def aws_authenticate():
     """
         Return keys and token for the instances IAM role.
     """
@@ -45,61 +45,51 @@ def _get_aws_credentials():
     credentials = session.get_credentials()
     credentials = credentials.get_frozen_credentials()
 
-    if not hasattr(credentials, 'access_key'):
-        raise BadCredentials
-
-    if len(credentials.access_key) < 16:
-        raise BadCredentials
+    if not hasattr(credentials, "access_key") or len(credentials.access_key) < 16:
+        raise ValueError("Bad credentials provided")
 
     return credentials
 
 
-def _connect_to_vault(url, access_key, secret_key, token, region, ca_cert="./mdtp.pem"):
+def vault_authenticate(vault_url, credentials, region, ca_cert):
     """
         Return Vault client using supplied IAM credentials.
     """
-    # Add CA_CERT for lambda requests to vault
-    if ca_cert:
-        vault_client = hvac.Client(url=url, verify=ca_cert)
-    else:
-        vault_client = hvac.Client(url=url)
+    vault_client = hvac.Client(url=vault_url, verify=ca_cert)
+    vault_client.auth_aws_iam(
+        credentials.access_key, credentials.secret_key, credentials.token, region=region
+    )
+    vault_token = vault_client.lookup_token()["data"]["id"]
 
-    vault_client.auth_aws_iam(access_key,
-                              secret_key,
-                              token,
-                              region=region)
+    return vault_token
 
-    return vault_client
 
-def vault_sign_certificate(vault_url, user_name, public_key, ttl, vault_token):
-    print("###### Signing Public Certificate ######")
+def vault_sign_public_key(vault_url, vault_session, user_name, public_key, ttl):
+    """
+        Use Vault's public key signing API to sign the supplied public key
+        with Vault's internal CA.
+    """
     url = vault_url + "/v1/ssh-platsec-poc/sign/signer-poc"
-    data = {
-        "public_key": public_key,
-        "valid_principals": user_name,
-        "ttl": ttl,
-    }
-    headers = {"X-Vault-Token": vault_token}
+    data = {"public_key": public_key, "valid_principals": user_name, "ttl": ttl}
 
-    response = requests.post(url, json=data, headers=headers, verify=False)
-    print(response.content)
+    response = vault_session.post(url, json=data).json()
 
-    # try:
-    #     return response["data"]
-    # except KeyError:
-    #     errors = response.get("errors", [])
-    #     raise Exception("Certificate signing failed.  " + "; ".join(errors))
+    try:
+        return response["data"]
+    except KeyError:
+        errors = response.get("errors", [])
+        raise Exception("Certificate signing failed.  " + "; ".join(errors))
 
 
-def vault_wrap(state, json_blob):
-    url = state.VAULT_URL + "/v1/sys/wrapping/wrap"
-    data = json_blob
-    headers = {
-        "X-Vault-Token": state.vault_auth_token,
-        "X-Vault-Wrap-TTL": state.DEFAULT_WRAP_TTL,
-    }
+def vault_wrap(vault_url, vault_session, data):
+    """
+        Use Vault's Wrapping API to store the signed certificate in exchange
+        for a wrap token.
+    """
+    url = vault_url + "/v1/sys/wrapping/wrap"
+    vault_session.headers.update({"X-Vault-Wrap-TTL": DEFAULT_WRAP_TTL})
 
-    response = requests.post(url, json=data, headers=headers).json()
+    response = vault_session.post(url, json=data).json()
 
     try:
         return response["wrap_info"]["token"]
