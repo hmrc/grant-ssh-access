@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 88
+py36 = false
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | \.pytest_cache
+  | lambda-packages
+  | dist
+  | build
+  | docs
+)/
+'''
+
