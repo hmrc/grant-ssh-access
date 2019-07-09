@@ -87,7 +87,7 @@ def test_bad_wrapping_response(mocked_responses):
     assert "error" in response
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def bad_boto3(monkeypatch):
     boto_bad_creds = MagicMock(spec=boto3)
 
