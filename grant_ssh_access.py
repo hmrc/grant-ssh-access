@@ -69,7 +69,7 @@ def vault_sign_public_key(vault_url, vault_session, user_name, public_key, ttl):
         Use Vault's public key signing API to sign the supplied public key
         with Vault's internal CA.
     """
-    url = vault_url + "/v1/ssh-platsec-poc/sign/signer-poc"
+    url = vault_url + "/v1/ssh-client-signer/sign/vault-role"
     data = {"public_key": public_key, "valid_principals": user_name, "ttl": ttl}
 
     response = vault_session.post(url, json=data).json()

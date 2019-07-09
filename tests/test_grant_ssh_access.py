@@ -45,7 +45,7 @@ def test_happy_path(mocked_responses):
 
     mocked_responses.add(
         mocked_responses.POST,
-        url=re.compile(r".*/v1/ssh-platsec-poc/sign/signer-poc"),
+        url=re.compile(r".*/v1/ssh-client-signer/sign/vault-role"),
         body=json.dumps({"data": {"some": "data"}}),
     )
 
@@ -62,7 +62,7 @@ def test_happy_path(mocked_responses):
 def test_bad_sign_certificate_response(mocked_responses):
     mocked_responses.add(
         mocked_responses.POST,
-        url=re.compile(r".*/v1/ssh-platsec-poc/sign/signer-poc"),
+        url=re.compile(r".*/v1/ssh-client-signer/sign/vault-role"),
         body=json.dumps({"bad": {}}),
     )
 
@@ -73,7 +73,7 @@ def test_bad_sign_certificate_response(mocked_responses):
 def test_bad_wrapping_response(mocked_responses):
     mocked_responses.add(
         mocked_responses.POST,
-        url=re.compile(r".*/v1/ssh-platsec-poc/sign/signer-poc"),
+        url=re.compile(r".*/v1/ssh-client-signer/sign/vault-role"),
         body=json.dumps({"data": {"some": "data"}}),
     )
 
