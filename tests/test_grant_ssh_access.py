@@ -23,6 +23,10 @@ def mocked_boto3(monkeypatch):
         "x" * 16
     )
 
+    bizarro_boto3.Session.return_value.client.return_value.get_ssh_public_key.return_value = {  # noqa: E501 line too long
+        "SSHPublicKey": {"SSHPublicKeyBody": "public-key-wow"}
+    }
+
     monkeypatch.setattr("grant_ssh_access.boto3", bizarro_boto3)
 
 
@@ -55,7 +59,7 @@ def test_happy_path(mocked_responses):
         body=json.dumps({"wrap_info": {"token": "token"}}),
     )
 
-    response = grant_ssh_access.main("", "", "")
+    response = grant_ssh_access.main("", "")
     assert "token" in response
 
 
@@ -66,7 +70,7 @@ def test_bad_sign_certificate_response(mocked_responses):
         body=json.dumps({"bad": {}}),
     )
 
-    response = grant_ssh_access.main("", "", "")
+    response = grant_ssh_access.main("", "")
     assert "error" in response
 
 
@@ -83,7 +87,7 @@ def test_bad_wrapping_response(mocked_responses):
         body=json.dumps({"bad": {}}),
     )
 
-    response = grant_ssh_access.main("", "", "")
+    response = grant_ssh_access.main("", "")
     assert "error" in response
 
 
@@ -99,5 +103,5 @@ def bad_boto3(monkeypatch):
 
 
 def test_bad_aws_credentials(bad_boto3):
-    response = grant_ssh_access.main("", "", "")
+    response = grant_ssh_access.main("", "")
     assert "error" in response
