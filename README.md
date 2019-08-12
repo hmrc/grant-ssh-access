@@ -1,4 +1,3 @@
-
 # grant-ssh-access
 
 This is a lambda that takes a username and public key, and:
