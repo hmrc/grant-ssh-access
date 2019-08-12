@@ -10,16 +10,18 @@ DEFAULT_WRAP_TTL = str(60 * 60 * 4)
 
 
 def lambda_handler(event, context):
-    return main(event["user_name"], event["public_key"], event["ttl"])
+    return main(event["user_name"], event["ttl"])
 
 
-def main(user_name, public_key, ttl):
+def main(user_name, ttl):
     try:
         ca_cert = os.getenv("CA_CERT", "./mdtp.pem")
         region = os.getenv("REGION", "eu-west-2")
         vault_url = os.getenv("VAULT_URL")
 
         credentials = aws_authenticate()
+
+        public_key = fetch_public_key(user_name)
         vault_token = vault_authenticate(vault_url, credentials, region, ca_cert)
 
         vault_session = requests.Session()
@@ -49,6 +51,35 @@ def aws_authenticate():
         raise ValueError("Bad credentials provided")
 
     return credentials
+
+
+def fetch_public_key(user_name):
+    arn_role_cross_account_ssh = os.getenv(
+        "CROSS_ACCOUNT_SSH_ARN", "arn:aws:iam::638924580364:role/RoleCrossAccountSSH"
+    )
+    sts_client = boto3.client("sts")
+    assumed = sts_client.assume_role(
+        RoleArn=arn_role_cross_account_ssh, RoleSessionName="grant_ssh_access"
+    )
+
+    credentials = assumed["Credentials"]
+
+    session = boto3.Session(
+        aws_access_key_id=credentials["AccessKeyId"],
+        aws_secret_access_key=credentials["SecretAccessKey"],
+        aws_session_token=credentials["SessionToken"],
+    )
+
+    iam = session.client("iam")
+    key_id = iam.list_ssh_public_keys(UserName=user_name).get("SSHPublicKeys")[0][
+        "SSHPublicKeyId"
+    ]
+
+    public_key = iam.get_ssh_public_key(
+        UserName=user_name, SSHPublicKeyId=key_id, Encoding="SSH"
+    )["SSHPublicKey"]["SSHPublicKeyBody"]
+
+    return public_key
 
 
 def vault_authenticate(vault_url, credentials, region, ca_cert):
