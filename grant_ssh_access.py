@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 import os
 import traceback
-
+import logging
 import boto3
 import hvac
 import requests
 
 DEFAULT_WRAP_TTL = str(60 * 60 * 4)
+
+logging.basicConfig(format="%(asctime)-15s %(message)s", level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def lambda_handler(event, context):
@@ -15,6 +18,7 @@ def lambda_handler(event, context):
 
 def main(user_name, ttl):
     try:
+        logger.info("received request to sign key for user")
         ca_cert = os.getenv("CA_CERT", "./mdtp.pem")
         region = os.getenv("REGION", "eu-west-2")
         vault_url = os.getenv("VAULT_URL")
@@ -49,6 +53,7 @@ def aws_authenticate():
 
     if not hasattr(credentials, "access_key") or len(credentials.access_key) < 16:
         raise ValueError("Bad credentials provided")
+    logger.info("authenticated with aws")
 
     return credentials
 
@@ -78,6 +83,7 @@ def fetch_public_key(user_name):
     public_key = iam.get_ssh_public_key(
         UserName=user_name, SSHPublicKeyId=key_id, Encoding="SSH"
     )["SSHPublicKey"]["SSHPublicKeyBody"]
+    logger.info("fetched public key for user")
 
     return public_key
 
@@ -91,6 +97,7 @@ def vault_authenticate(vault_url, credentials, region, ca_cert):
         credentials.access_key, credentials.secret_key, credentials.token, region=region
     )
     vault_token = vault_client.lookup_token()["data"]["id"]
+    logger.info("authenticated with vault")
 
     return vault_token
 
@@ -106,7 +113,10 @@ def vault_sign_public_key(vault_url, vault_session, user_name, public_key, ttl):
     response = vault_session.post(url, json=data).json()
 
     try:
-        return response["data"]
+        data = response["data"]
+        logger.info("signed public key")
+
+        return data
     except KeyError:
         errors = response.get("errors", [])
         raise Exception("Certificate signing failed.  " + "; ".join(errors))
@@ -123,7 +133,10 @@ def vault_wrap(vault_url, vault_session, data):
     response = vault_session.post(url, json=data).json()
 
     try:
-        return response["wrap_info"]["token"]
+        token = response["wrap_info"]["token"]
+        logger.info("wrapped signed public key")
+
+        return token
     except KeyError:
         errors = response.get("errors", [])
         raise Exception("Wrapping failed.  " + "; ".join(errors))
