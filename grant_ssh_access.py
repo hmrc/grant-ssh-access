@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
+import logging
 import os
 import traceback
-import logging
+import sys
+
 import boto3
 import hvac
 import requests
 
 DEFAULT_WRAP_TTL = str(60 * 60 * 4)
 
-logging.basicConfig(format="%(asctime)-15s %(message)s", level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)-15s %(message)s", level=logging.INFO, stream=sys.stdout
+)
 logger = logging.getLogger(__name__)
 
 
 def lambda_handler(event, context):
+    logger.info("function invoked")
     return main(event["user_name"], event["ttl"])
 
 
