@@ -10,7 +10,7 @@ import aws_lambda_logging
 
 DEFAULT_WRAP_TTL = str(60 * 60 * 4)
 
-aws_lambda_logging.setup(level="INFO")
+aws_lambda_logging.setup(level="INFO", boto_level="DEBUG")
 
 
 def lambda_handler(event, context):
