@@ -1,4 +1,4 @@
 requests==2.22.0
 hvac==0.9.3
 boto3==1.9.183
-
+aws_lambda_logging==0.1.1
