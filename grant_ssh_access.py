@@ -65,6 +65,7 @@ def fetch_public_key(user_name):
         "CROSS_ACCOUNT_SSH_ARN", "arn:aws:iam::638924580364:role/RoleCrossAccountSSH"
     )
     sts_client = boto3.client("sts")
+    logging.info(f"assuming role {arn_role_cross_account_ssh}")
     assumed = sts_client.assume_role(
         RoleArn=arn_role_cross_account_ssh, RoleSessionName="grant_ssh_access"
     )
@@ -78,10 +79,12 @@ def fetch_public_key(user_name):
     )
 
     iam = session.client("iam")
+    logging.info("getting list of public keys")
     key_id = iam.list_ssh_public_keys(UserName=user_name).get("SSHPublicKeys")[0][
         "SSHPublicKeyId"
     ]
 
+    logging.info(f"getting public key {key_id}")
     public_key = iam.get_ssh_public_key(
         UserName=user_name, SSHPublicKeyId=key_id, Encoding="SSH"
     )["SSHPublicKey"]["SSHPublicKeyBody"]
