@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -xeou
-yum install -y zip python36
+sudo yum install -y zip python36
 
 BASEDIR=/data
 PIPPACKAGESDIR=${BASEDIR}/lambda-packages
