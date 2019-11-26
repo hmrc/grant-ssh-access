@@ -14,3 +14,4 @@ mkdir -p ${PIPPACKAGESDIR}
 pip-3.6 install -t ${PIPPACKAGESDIR} -r requirements.txt
 cd ${PIPPACKAGESDIR}
 zip -r ../grant_ssh_access.zip .
+rm -rf ${PIPPACKAGESDIR}/*
