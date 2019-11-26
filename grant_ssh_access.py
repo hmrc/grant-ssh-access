@@ -27,7 +27,7 @@ def main(user_name, ttl):
 
         credentials = aws_authenticate()
 
-        public_key = fetch_public_key(user_name)
+        public_key = fetch_public_key(user_name, region)
         vault_token = vault_authenticate(vault_url, credentials, region, ca_cert)
 
         vault_session = requests.Session()
@@ -60,11 +60,12 @@ def aws_authenticate():
     return credentials
 
 
-def fetch_public_key(user_name):
+def fetch_public_key(user_name, region):
     arn_role_cross_account_ssh = os.getenv(
         "CROSS_ACCOUNT_SSH_ARN", "arn:aws:iam::638924580364:role/RoleCrossAccountSSH"
     )
-    sts_client = boto3.client("sts")
+    url = f"https://sts.{region}.amazonaws.com"
+    sts_client = boto3.client("sts", region_name=region, endpoint_url=url)
     logging.info(f"assuming role {arn_role_cross_account_ssh}")
     assumed = sts_client.assume_role(
         RoleArn=arn_role_cross_account_ssh, RoleSessionName="grant_ssh_access"
