@@ -9,6 +9,8 @@ This is a lambda that takes a username and public key, and:
 
 (Written from the perspective of a user with the GrantSSHAccess role. e.g. a Platform Owner)
 
+If you have AWS CLI and the engineer has sent you a command to run, follow instructions [here](#instructions-for-running-aws-command)
+
 The engineer will have sent you a JSON snippet, something like the following:
 ```
 {
@@ -45,6 +47,14 @@ The process is as follows:
 ```
 ![](images/success-screenshot.png)
 9. Send the content of the message to the engineer who requested access. The token is not sensitive, so can be sent via slack / email / pigeon.
+
+## Instructions for running AWS command
+If the engineer sent you an AWS command to run.
+
+1. Ensure you have the AWS CLI setup
+2. Run the command using the appropriate profile.
+3. Send the generated token to the user. The token is not sensitive, so can be sent via slack / email / pigeon.
+
 
 ## Configuration
 
