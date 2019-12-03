@@ -23,7 +23,7 @@ They will also let you know which environment they'd like to access.
 
 The process is as follows:
 1. Assume the RoleGrantSSHAccess role for the environment the engineer would like access to. 
-    - Use the set of links at the bottom of this document.
+    - Use the set of links below to assume this role.
    
 | Environment | Account Number | RoleGrantSSHAccess links |
 |-------------|----------------|---------------------|
