@@ -36,6 +36,7 @@ The process is as follows:
 
 
 2. Navigate to the grant-ssh-access lambda in the AWS console. [Link](https://eu-west-2.console.aws.amazon.com/lambda/home?region=eu-west-2#/functions/grant-ssh-access?tab=configuration)
+  - You may see some error messages about permissions. This is not a problem.
 3. You will see a screen as follows: ![](images/lambda-view.png)
 4. Click the 'Select a test event' dropdown menu at the top right of the page and click Configure test events: ![](images/select-a-test-event.png)
 5. You will see a popup appear. Delete the JSON shown, and replace it with the JSON the engineer sent you: ![](images/replace-json.png)
@@ -43,10 +44,12 @@ The process is as follows:
 7. Ensure the event that you just created is selected, and click the 'Test' button: ![](images/event-selected.png)
 8. Once the lambda has successfully executed, you will see a green box with something like this:
 ```
-{ "token": "12joi1j2oijb1ij2voij1vij1" }
+{ 
+  "token": "12joi1j2oijb1ij2voij1vij1" 
+}
 ```
-![](images/success-screenshot.png)
-9. Send the content of the message to the engineer who requested access. The token is not sensitive, so can be sent via slack / email / pigeon.
+![](images/success-lambda.png)
+9. Send the token to the engineer who requested access. The token is not sensitive, so can be sent via slack / email / pigeon.
 
 ## Instructions for running AWS command
 If the engineer sent you an AWS command to run.
