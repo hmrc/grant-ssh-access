@@ -47,7 +47,7 @@ def main(user_name, ttl):
 
 def aws_authenticate():
     """
-        Return keys and token for the instances IAM role.
+    Return keys and token for the instances IAM role.
     """
     session = boto3.Session()
     credentials = session.get_credentials()
@@ -96,7 +96,7 @@ def fetch_public_key(user_name, region):
 
 def vault_authenticate(vault_url, credentials, region, ca_cert):
     """
-        Return Vault client using supplied IAM credentials.
+    Return Vault client using supplied IAM credentials.
     """
     vault_client = hvac.Client(url=vault_url, verify=ca_cert)
     vault_client.auth_aws_iam(
@@ -110,8 +110,8 @@ def vault_authenticate(vault_url, credentials, region, ca_cert):
 
 def vault_sign_public_key(vault_url, vault_session, user_name, public_key, ttl):
     """
-        Use Vault's public key signing API to sign the supplied public key
-        with Vault's internal CA.
+    Use Vault's public key signing API to sign the supplied public key
+    with Vault's internal CA.
     """
     url = vault_url + "/v1/ssh-client-signer/sign/vault-role"
     data = {"public_key": public_key, "valid_principals": user_name, "ttl": ttl}
@@ -130,8 +130,8 @@ def vault_sign_public_key(vault_url, vault_session, user_name, public_key, ttl):
 
 def vault_wrap(vault_url, vault_session, data):
     """
-        Use Vault's Wrapping API to store the signed certificate in exchange
-        for a wrap token.
+    Use Vault's Wrapping API to store the signed certificate in exchange
+    for a wrap token.
     """
     url = vault_url + "/v1/sys/wrapping/wrap"
     vault_session.headers.update({"X-Vault-Wrap-TTL": DEFAULT_WRAP_TTL})
